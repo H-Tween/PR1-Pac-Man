@@ -31,11 +31,15 @@ fps = 60
 # Setting the game ending condition 
 gameEnd = False
 
+# Condition of winning
+won = False
+
 # Counter used to change pacman images to appear to animate as well as flicking of the powerUps
 counter = 0
 pacmanImages = []
 
-endGameCounter = 0
+# Counter for flashing end game display
+endGameCounter = 20
 
 # Setting initial postion of player
 playerX = 10 # 10 13 453
@@ -97,10 +101,12 @@ powerUpCounter = 0
 powerUpActive = False
 
 moving = False # stops everything from moving in the beginning of the game
+
+# Starting Counter
 startUpCounter = 0
 
 
-# displays each pacman image in order
+# Displays each pacman image in order
 for i in range(1, 4): 
     pacmanImages.append(pygame.transform.scale(pygame.image.load(f"images//pacman/P{i}.png"), (24, 24)))
 
@@ -142,7 +148,7 @@ def drawScoreboardAndPowerUps(powerUps, padding, powerUpCounter):
     screen.blit(scoreText, (5, 317)) 
 
     # Display PowerUps
-    powerUpsText = font.render('PowerUps: ', True, "white")
+    powerUpsText = font.render('Power-ups: ', True, "white")
     screen.blit(powerUpsText, (695, 317)) 
 
     # For every powerUp gained, the powerUp is drawn next to the display text, showing how many powerUps are available
@@ -157,7 +163,7 @@ def drawScoreboardAndPowerUps(powerUps, padding, powerUpCounter):
     # Display powerUp timer
     newPowerUpCounter = float(powerUpCounter / 60)
     roundedPowerUpCounter = format(newPowerUpCounter, '.1f')
-    powerUpCounterText = font.render(f'PowerUpCounter: {roundedPowerUpCounter}', True, "white")
+    powerUpCounterText = font.render(f'Power-up timer: {roundedPowerUpCounter}', True, "white")
     screen.blit(powerUpCounterText, (695, 483)) 
 
 
@@ -191,11 +197,12 @@ def drawTrademark():
     nameOneText = font.render('Harrison Tween & ', True, "white")
     nameTwoText = font.render('Aaron Temiwoluwa', True, "white")
 
-    screen.blit(createdByText, (345, 385)) # + 15, + 15
+    screen.blit(createdByText, (345, 385))
     screen.blit(nameOneText, (360, 400))
     screen.blit(nameTwoText, (375, 415))
 
 def drawStartGame(powerUpCounter):
+    # Countdown timer
     if powerUpCounter < 60: 
         startTimer = 3
     elif powerUpCounter < 120:
@@ -206,12 +213,22 @@ def drawStartGame(powerUpCounter):
     startGameText = largeFont.render(f'Starting in: {startTimer}', True, 'white')
     screen.blit(startGameText, (330, 518))
 
-def drawEndGame():
-    if endGameFlickering == True:
+def drawEndGame(won):
+    # Displaying if player one or lost
+    if won == False:
         gameEndText = extraLargeFont.render('GAME OVER', True, 'white')
-        screen.blit(gameEndText, (235, 200))
-    exitGameFont = largeFont.render('Please Exit', True, 'white')
-    screen.blit(exitGameFont, (345, 518))
+    else:
+        gameEndText = extraLargeFont.render('YOU WIN!', True, 'white')
+
+    if endGameFlickering == True:
+        if won == False:
+            position = (235, 200)
+        else:
+            position = (285, 200)
+        screen.blit(gameEndText, position)
+
+        exitGameFont = largeFont.render('Please Exit', True, 'white')
+        screen.blit(exitGameFont, (345, 518))
     
 
 def drawPacman(playerX, playerY):
@@ -569,6 +586,25 @@ def checkPelletsAndPowerUps(score, powerUps, powerUpActive):
             powerUps += 1
 
     return score, powerUps, powerUpActive
+
+def checkGameEndCondition():
+
+    # Range check to see if there are any pellets and power-ups left on the board, if not the game ends
+    scoreAvailable = 0
+    for i in range(len(board)): # each row
+        for j in range(len(board[i])): # each column in row
+            
+            if board[i][j] == 1:
+                scoreAvailable += 1
+            
+            if board[i][j] == 2:
+                scoreAvailable += 1
+            
+    if scoreAvailable > 0:
+        return False, True, False
+    elif scoreAvailable == 0:
+        return True, False, True
+
 
 def movePlayer(playerX, playerY):
     # R, L, U, D
@@ -1955,7 +1991,7 @@ while run:
         drawStartGame(startUpCounter)
 
     if gameEnd == True:
-        drawEndGame()
+        drawEndGame(won)
 
     # Testing
     # pygame.draw.circle(screen, "white", (playerCenterX, playerCenterY), 2)
@@ -2034,6 +2070,8 @@ while run:
                 ghostX4, ghostY4, ghostDirection4 = moveGhost4(ghostX4, ghostY4, ghostDirection4)
 
     score, powerUps, powerUpActive = checkPelletsAndPowerUps(score, powerUps, powerUpActive)
+
+    gameEnd, moving, won = checkGameEndCondition()
 
     # If collision and no powerUp active
     if powerUpActive == False:
