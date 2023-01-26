@@ -19,6 +19,8 @@ screen = pygame.display.set_mode([WIDTH, HEIGHT])
 
 # Setting Font
 font = pygame.font.SysFont("freesansbold.tff", 20)
+largeFont = pygame.font.SysFont("freesansbold.tff", 40)
+extraLargeFont = pygame.font.SysFont("freesansbold.tff", 85)
 
 # Tracking time
 timer = pygame.time.Clock()
@@ -32,6 +34,8 @@ gameEnd = False
 # Counter used to change pacman images to appear to animate as well as flicking of the powerUps
 counter = 0
 pacmanImages = []
+
+endGameCounter = 0
 
 # Setting initial postion of player
 playerX = 10 # 10 13 453
@@ -132,23 +136,54 @@ def drawBoard(board):
                 lineEnd = (x + width, y + (0.5 * height)) # End X and Y coordinates
                 pygame.draw.line(screen, "white", lineStart, lineEnd, 3)
 
-def drawScoreboardAndPowerUps(powerUps, padding, test):
+def drawScoreboardAndPowerUps(powerUps, padding, powerUpCounter):
     # Display score
     scoreText = font.render(f'Score: {score}', True, "white")
-    screen.blit(scoreText, (10, 872)) 
+    screen.blit(scoreText, (5, 317)) 
 
     # Display PowerUps
     powerUpsText = font.render('PowerUps: ', True, "white")
-    screen.blit(powerUpsText, (700, 872)) 
+    screen.blit(powerUpsText, (695, 317)) 
 
     # For every powerUp gained, the powerUp is drawn next to the display text, showing how many powerUps are available
     for i in range(powerUps):
-        pygame.draw.circle(screen, "white", (780 + padding, 880), 8) # 506
-        padding += 20
+        pygame.draw.circle(screen, "white", (775 + padding, 323), 8) # 506
+        padding += 18
 
     # Testing
-    testText = font.render(f'PowerUps: {powerUps} and {test}', True, "white")
-    screen.blit(testText, (300, 500))
+    # testText = font.render(f'PowerUps: {powerUps} and {powerUpCounter}', True, "white")
+    # screen.blit(testText, (300, 500))
+
+    # Display powerUp timer
+    newPowerUpCounter = float(powerUpCounter / 60)
+    roundedPowerUpCounter = format(newPowerUpCounter, '.1f')
+    powerUpCounterText = font.render(f'PowerUpCounter: {roundedPowerUpCounter}', True, "white")
+    screen.blit(powerUpCounterText, (695, 483)) 
+
+
+def drawLives(lives):
+    # Lives
+    livesText = font.render('Lives: ', True, 'white')
+    screen.blit(livesText, (5, 483))
+
+    # Display Lives
+    pacManLives = pygame.transform.scale(pygame.image.load(f"images//pacman/P1.png"), (24, 24))
+    if lives == 2:
+        screen.blit(pacManLives, (48, 477))
+        screen.blit(pacManLives, (48 + 28, 477))
+        screen.blit(pacManLives, (48 + 56, 477))
+    elif lives == 1:
+        screen.blit(pacManLives, (48, 477))
+        screen.blit(pacManLives, (48 + 28, 477))
+    elif lives == 0:
+        screen.blit(pacManLives, (48, 477))
+        
+    # For loop caused the game to decrease in fps
+
+    # for i in range(lives + 1): 
+    #     pacManLives = pygame.transform.scale(pygame.image.load(f"images//pacman/P1.png"), (24, 24))
+    #     screen.blit(pacManLives, (48 + padding, 477))
+    #     padding += 28
 
 def drawTrademark():
     # Displaying creators of game
@@ -156,9 +191,28 @@ def drawTrademark():
     nameOneText = font.render('Harrison Tween & ', True, "white")
     nameTwoText = font.render('Aaron Temiwoluwa', True, "white")
 
-    screen.blit(createdByText, (345, 385))
+    screen.blit(createdByText, (345, 385)) # + 15, + 15
     screen.blit(nameOneText, (360, 400))
     screen.blit(nameTwoText, (375, 415))
+
+def drawStartGame(powerUpCounter):
+    if powerUpCounter < 60: 
+        startTimer = 3
+    elif powerUpCounter < 120:
+        startTimer = 2
+    else:
+        startTimer = 1
+        
+    startGameText = largeFont.render(f'Starting in: {startTimer}', True, 'white')
+    screen.blit(startGameText, (330, 518))
+
+def drawEndGame():
+    if endGameFlickering == True:
+        gameEndText = extraLargeFont.render('GAME OVER', True, 'white')
+        screen.blit(gameEndText, (235, 200))
+    exitGameFont = largeFont.render('Please Exit', True, 'white')
+    screen.blit(exitGameFont, (345, 518))
+    
 
 def drawPacman(playerX, playerY):
     # Right, left, up, down
@@ -198,9 +252,6 @@ def drawGhost(ghostX, ghostY, ghostDirection, ghost):
         screen.blit(pygame.transform.flip(ghost, True, False), (ghostX, ghostY))
 
     return ghostHitbox
-
-def drawEndgame():
-    pass
 
 def positionCheck(playerCenterX, playerCenterY):
     # R, L, U, D
@@ -1841,12 +1892,27 @@ while run:
         counter = 0 # Reset counter to start at first pacman image
         flickering = False # Turning flickering off to make powerUp disappear briefly to simulate flickering
 
+    # Flickering of game ending screen
+    if endGameCounter < 60:
+        endGameCounter += 1
+        if (endGameCounter >= 0 and endGameCounter <= 40):
+            endGameFlickering = True
+        else:
+            endGameFlickering = False 
+
+    else:
+        endGameCounter = 0 
+        endGameFlickering = False 
+
+
     # Game Start Up
     if startUpCounter < 180:
         moving = False
+        # Game Start
         startUpCounter += 1
     elif gameEnd == True:
         moving == False
+        # Game over
     else:
         moving = True
 
@@ -1883,6 +1949,13 @@ while run:
     ghostHitbox3 = drawGhost(ghostX3, ghostY3, ghostDirection3, ghost3)
     ghostHitbox4 = drawGhost(ghostX4, ghostY4, ghostDirection4, ghost4)
     drawScoreboardAndPowerUps(powerUps, padding, powerUpCounter)
+    drawLives(lives)
+
+    if startUpCounter < 180:
+        drawStartGame(startUpCounter)
+
+    if gameEnd == True:
+        drawEndGame()
 
     # Testing
     # pygame.draw.circle(screen, "white", (playerCenterX, playerCenterY), 2)
@@ -2000,7 +2073,7 @@ while run:
                 ghostAlive4 = True
 
             elif lives <= 0:
-                drawEndgame()
+                lives -= 1
                 moving = False
                 gameEnd = True
 
@@ -2091,4 +2164,3 @@ while run:
     pygame.display.flip() # updates screen
 
 pygame.quit()
-#
