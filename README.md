@@ -22,6 +22,11 @@ In this game, the character "Pac-Man" will be able to move around a maze using a
 * Programming Language: Python
 * Game Engine: pygame
 
+## Requirements
+
+* Python 3.9
+* Install required dependencies (Read below)
+
 ## Installing the python packages
 
 Using the virtual environment manager of your choice (venv, conda, etc.), install the python packages
